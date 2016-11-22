@@ -3,31 +3,66 @@ module.exports = (Franz, options) => {
         location.reload();
     }, 90000);
 
-    const script = document.createElement('script');
-    script.setAttribute('src', 'https://code.jquery.com/jquery-3.1.0.min.js');
-    script.setAttribute('integrity', 'sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=');
-    script.setAttribute('crossorigin', 'anonymous');
+    window.addEventListener('load', (ev) => {
+        clickNotify(); // open notify menu
 
-    const head = document.getElementsByTagName('head')[0];
-    head.appendChild(script);
+        setTimeout(checkNotify, 500);
+    });
 
-    window.onscroll = function(ev) {
-        const now = $('main section article header a time').attr('datetime');
+    window.addEventListener('scroll', (ev) => {
+        const now = document.querySelector('main section article header a time').getAttribute('datetime');
         localStorage.setItem("Franz.Instagram.latest", now);
-    };
+    });
 
-    function getMessages() {
+    function getUnreadEntry() {
         const latest = localStorage.getItem("Franz.Instagram.latest");
-        const now = $('main section article header a time').attr('datetime');
-        var unread = 0;
+        const now = document.querySelector('main section article header a time').getAttribute('datetime');
         if (!latest) {
             localStorage.setItem("Franz.Instagram.latest", now);
         }
         if (latest != now) {
-            unread = 1;
+            return 1;
         }
 
-        Franz.setBadge(0, unread);
+        return 0;
+    }
+
+    function clickNotify() {
+        const elm = document.querySelector('.coreSpriteDesktopNavActivity');
+        const evt = document.createEvent("MouseEvents");
+        evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, elm);
+        elm.dispatchEvent(evt);
+    }
+
+    function checkNotify() {
+        if (document.querySelector('._mkiio._8kllr ._auspy time')) {
+            Franz.instagramNotify = document.querySelector('._mkiio._8kllr ._auspy time').getAttribute('datetime');
+            clickNotify(); // close notify menu
+
+            const elm = document.querySelector('.coreSpriteDesktopNavActivity');
+            elm.addEventListener('click', (ev) => {
+                localStorage.setItem("Franz.Instagram.notify", Franz.instagramNotify);
+            });
+        } else {
+            setTimeout(checkNotify, 500);
+        }
+    }
+
+    function getNotify() {
+        const latest = localStorage.getItem("Franz.Instagram.notify");
+        console.log(Franz.instagramNotify);
+        if (!latest) {
+            localStorage.setItem("Franz.Instagram.notify", Franz.instagramNotify);
+        }
+        if (latest != Franz.instagramNotify) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    function getMessages() {
+        Franz.setBadge(getNotify(), getUnreadEntry());
     }
 
     Franz.loop(getMessages);
